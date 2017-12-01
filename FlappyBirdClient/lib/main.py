@@ -12,7 +12,7 @@ def main():
 
     #turn off display FPS
     # director.show_FPS = True
-    
+
     #run
     gameScene = Scene()
     game_start(gameScene)
@@ -21,4 +21,3 @@ def main():
         director.replace(gameScene)
     else:
         director.run(gameScene)
-
