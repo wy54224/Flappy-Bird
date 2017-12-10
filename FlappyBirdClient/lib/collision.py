@@ -9,13 +9,14 @@ from bird import *
 from score import *
 from game_controller import *
 import common
+from pipe import pipeDistance
 
 # contactListener
 collision_manager = None
 collision_func = None
 
 def addCollision(gameScene, gameLayer, spriteBird, pipes, land_1, land_2):
-    global collision_manager, collision_func, upPipeCollided, isCollided, pipeDistance
+    global collision_manager, collision_func, upPipeCollided, isCollided
     #设置land区域对应的刚体
     landSprite = CollidableRectSprite("land", (common.visibleSize["width"])/2, (atlas["land"]["height"] / 4 - 3), (common.visibleSize["width"])/2, (atlas["land"]["height"])/2)
 
@@ -25,7 +26,6 @@ def addCollision(gameScene, gameLayer, spriteBird, pipes, land_1, land_2):
     upPipeY = getUpPipeYPosition()
     upPipeCollided = False
     isCollided = False
-    pipeDistance = 100
 
     #初始化碰撞管理器
     collision_manager = CollisionManagerBruteForce()
@@ -40,7 +40,7 @@ def addCollision(gameScene, gameLayer, spriteBird, pipes, land_1, land_2):
         global isCollided, upPipeCollided, collision_func
         spriteBird.cshape.center = Vector2(spriteBird.position[0], spriteBird.position[1])
         for i in range(0, pipeCount):
-            pipes[i].get("downPipe").cshape.center = Vector2(pipes[i].position[0], pipes[i].position[1]+(atlas["pipe_up"]["height"] + pipeDistance)) 
+            pipes[i].get("downPipe").cshape.center = Vector2(pipes[i].position[0], pipes[i].position[1]+(atlas["pipe_up"]["height"] + pipeDistance[i]))
             pipes[i].get("upPipe").cshape.center = Vector2(pipes[i].position[0], pipes[i].position[1])
 
         for other in collision_manager.iter_colliding(spriteBird):
@@ -82,5 +82,3 @@ def gameOver(gameScene, land_1, land_2, spriteBird, upPipeCollided):
         spriteBird.stop()
         import game_controller
         game_controller.backToMainMenu()
-
-    

@@ -13,7 +13,6 @@ import common
 pipeCount = 2
 pipeHeight = 320
 pipeWidth = 52
-pipeDistance = 100    #上下管道间的距离
 pipeInterval = 180    #两根管道的水平距离
 waitDistance = 100    #开始时第一根管道距离屏幕最右侧的距离
 heightOffset = 25     #管道的高度偏移值
@@ -21,6 +20,8 @@ heightOffset = 25     #管道的高度偏移值
 PIPE_NEW = 0
 PIPE_PASS = 1
 pipes = {}    #contains nodes of pipes
+downPipes = {}
+pipeDistance = {}
 pipeState = {}    #PIPE_NEW or PIPE_PASS
 downPipeYPosition = {}    #朝下pipe的最下侧的y坐标
 upPipeYPosition = {}  #朝上pipe的最上侧的y坐标
@@ -36,8 +37,8 @@ def createPipes(layer, gameScene, spriteBird, score, speed):
     def initPipe():
         for i in range(0, pipeCount):
             #把downPipe和upPipe组合为singlePipe
-            pipeDistance = random.randint(speed * 5 / 6, 100)
-            downPipe = CollidableRectSprite("pipe_down", 0, (pipeHeight + pipeDistance), pipeWidth/2, pipeHeight/2) #朝下的pipe而非在下方的pipe
+            pipeDistance[i] = random.randint(speed * 5 / 6, 100)
+            downPipe = CollidableRectSprite("pipe_down", 0, (pipeHeight + pipeDistance[i]), pipeWidth/2, pipeHeight/2) #朝下的pipe而非在下方的pipe
             upPipe = CollidableRectSprite("pipe_up", 0, 0, pipeWidth/2, pipeHeight/2)  #朝上的pipe而非在上方的pipe
             singlePipe = CocosNode()
             singlePipe.add(downPipe, name="downPipe")
@@ -48,9 +49,10 @@ def createPipes(layer, gameScene, spriteBird, score, speed):
             singlePipe.position=(common.visibleSize["width"] + i*pipeInterval + waitDistance, heightOffset)
             layer.add(singlePipe, z=10)
             pipes[i] = singlePipe
+            downPipes[i] = downPipe
             pipeState[i] = PIPE_NEW
             upPipeYPosition[i] = heightOffset + pipeHeight/2
-            downPipeYPosition[i] = heightOffset + pipeHeight/2 + pipeDistance
+            downPipeYPosition[i] = heightOffset + pipeHeight/2 + pipeDistance[i]
 
     def movePipe(dt):
         moveDistance = common.visibleSize["width"]/speed   # 移动速度和land一致
@@ -58,18 +60,17 @@ def createPipes(layer, gameScene, spriteBird, score, speed):
             pipes[i].position = (pipes[i].position[0]-moveDistance, pipes[i].position[1])
             if pipes[i].position[0] < -pipeWidth/2:
                 pipeNode = pipes[i]
+                downPipe = downPipes[i]
                 pipeState[i] = PIPE_NEW
                 next = i - 1
                 if next < 0: next = pipeCount - 1
                 #属性重新设置
                 heightOffset = random.randint(0, 130)
+                pipeDistance[i] = random.randint(min(speed, 100), 100)
+                downPipe.position = (0, (pipeHeight + pipeDistance[i]))
                 pipeNode.position = (pipes[next].position[0] + pipeInterval, heightOffset)
-                pipeNode.remove("downPipe")
-                pipeDistance = random.randint(min(speed, 100), 100)
-                downPipe = CollidableRectSprite("pipe_down", 0, (pipeHeight + pipeDistance), pipeWidth/2, pipeHeight/2)
-                pipeNode.add(downPipe, name="downPipe")
                 upPipeYPosition[i] = heightOffset + pipeHeight/2
-                downPipeYPosition[i] = heightOffset + pipeHeight/2 + pipeDistance
+                downPipeYPosition[i] = heightOffset + pipeHeight/2 + pipeDistance[i]
                 break
 
     def calScore(dt):
