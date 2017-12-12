@@ -36,6 +36,9 @@ errorLabel = None
 isGamseStart = False
 #难度选择 0是简单 1是普通 2是困难
 difficulty = 0
+#当前所处页面使用的menu（若无为None）
+currentMenu = None
+current = None
 
 def initGameLayer():
     global spriteBird, gameLayer, land_1, land_2
@@ -62,6 +65,8 @@ def game_start(_gameScene):
     initGameLayer()
     #start_botton = SingleGameStartMenu()
     #gameLayer.add(start_botton, z=20, name="start_button")
+    menu_button = SingleMainMenu()
+    gameLayer.add(menu_button, z=20, name="menu_button")
     AddLoginContext()
     connect(gameScene)
 
@@ -135,8 +140,11 @@ def singleGameReady():
     gameScene.add(readyLayer, z=10)
 
 def backToMainMenu():
-    restartButton = RestartMenu()
-    gameLayer.add(restartButton, z=50)
+    global current
+    current = RestartMenu()
+    global currentMenu
+    currentMenu = "restart_button"
+    gameLayer.add(current, z=50, name="restart_button")
 
 def showNotice():
     connected = connect(gameScene) # connect is from network.py
@@ -148,8 +156,8 @@ def showNotice():
 
 def showContent(content):
     removeContent()
-    notice = createLabel(content, common.visibleSize["width"]/2+5, common.visibleSize["height"] * 9/10)
-    gameLayer.add(notice, z=70, name="content")
+    content = createLabel(content, common.visibleSize["width"]/2+5, common.visibleSize["height"] * 9/10)
+    gameLayer.add(content, z=70, name="content")
 
 def removeContent():
     try:
@@ -174,14 +182,25 @@ class RestartMenu(Menu):
         gameScene.remove(gameLayer)
         initGameLayer()
         isGamseStart = False
+        menu_button = SingleMainMenu()
+        gameLayer.add(menu_button, z=20, name="menu_button")
+        global current
+        global currentMenu
+        current = None
+        currentMenu = None
         singleGameReady()
 
     def initDifficultyMenu(self):
         gameScene.remove(gameLayer)
         initGameLayer()
         isGamseStart = False
-        difficulty_button = SingleDifficultyChooseMenu()
-        gameLayer.add(difficulty_button, z=90, name="difficulty_button")
+        menu_button = SingleMainMenu()
+        gameLayer.add(menu_button, z=20, name="menu_button")
+        global current
+        current = SingleDifficultyChooseMenu()
+        global currentMenu
+        currentMenu = "difficulty_button"
+        gameLayer.add(current, z=90, name="difficulty_button")
 
 class SingleGameStartMenu(Menu):
     def __init__(self):
@@ -196,8 +215,11 @@ class SingleGameStartMenu(Menu):
 
     def gameStart(self):
         gameLayer.remove("start_button")
-        difficulty_button = SingleDifficultyChooseMenu()
-        gameLayer.add(difficulty_button, z=90, name="difficulty_button")
+        global current
+        current = SingleDifficultyChooseMenu()
+        global currentMenu
+        currentMenu = "difficulty_button"
+        gameLayer.add(current, z=90, name="difficulty_button")
 
 class SingleDifficultyChooseMenu(Menu):
     def __init__(self):
@@ -213,25 +235,94 @@ class SingleDifficultyChooseMenu(Menu):
         gameLayer.remove("difficulty_button")
         global difficulty
         difficulty = 0
+        global current
+        current = None
+        global currentMenu
+        currentMenu = None
         singleGameReady()
 
     def setMiddle(self):
         gameLayer.remove("difficulty_button")
         global difficulty
         difficulty = 1
+        global current
+        current = None
+        global currentMenu
+        currentMenu = None
         singleGameReady()
 
     def setHard(self):
         gameLayer.remove("difficulty_button")
         global difficulty
         difficulty = 2
+        global current
+        current = None
+        global currentMenu
+        currentMenu = None
         singleGameReady()
+
+'''Menu菜单'''
+class SingleMenu(Menu):
+        def __init__(self):
+            super(SingleMenu, self).__init__()
+            items = [
+                    (ImageMenuItem(common.load_image("button_logout.png"), self.logOut)),
+                    (ImageMenuItem(common.load_image("button_notice.png"), self.logOut))
+                    ]
+            self.create_menu(items,selected_effect=zoom_in(),unselected_effect=zoom_out())
+
+        def logOut(self):
+            gameScene.remove("MainMenu")
+            gameOver(gameScene, land_1, land_2, spriteBird, True)
+            if(currentMenu == "restart_button" and current):
+                gameLayer.remove(currentMenu)
+            gameScene.remove(gameLayer)
+            initGameLayer()
+            isGamseStart = False
+            menu_button = SingleMainMenu()
+            gameLayer.add(menu_button, z=20, name="menu_button")
+            AddLoginContext()
+
+'''Menu按钮'''
+class SingleMainMenu(Menu):
+    isShow = False
+    def __init__(self):
+        super(SingleMainMenu, self).__init__()
+        Menu = ImageMenuItem(common.load_image("button_menu.png"), self.showMain)
+        items = [Menu]
+        self.create_menu(items)
+        width, height = director.get_window_size()
+        pos_x = width // 2
+        pos_y = height - Menu.get_item_height() // 2
+        self.font_item['font_size'] = 15
+        self.font_item_selected['font_size'] = 19
+        Menu.generateWidgets(pos_x, pos_y, self.font_item, self.font_item_selected)
+
+    def showMain(self):
+        self.isShow = not self.isShow
+        global current
+        global currentMenu
+        global isPause
+        if(self.isShow):
+            spriteBird.pause()
+            gameScene.pause_scheduler()
+            singlemenu = SingleMenu()
+            gameScene.add(singlemenu, name="MainMenu")
+            if(currentMenu and current):
+                gameLayer.remove(currentMenu)
+        else:
+            gameScene.remove("MainMenu")
+            spriteBird.resume()
+            gameScene.resume_scheduler()
+            if(currentMenu and current):
+                gameLayer.add(current, z=70, name = currentMenu)
 
 '''自定义的文本输入框'''
 class MyOwnEntryItem(MenuItem):
     value = property(lambda self: u''.join(self._value),
                      lambda self, v: setattr(self, '_value', list(v)))
     show = True
+    background = None
 
     def __init__(self, label, show, callback_func, value, max_length=0):
         self._value = list(value)
@@ -239,6 +330,8 @@ class MyOwnEntryItem(MenuItem):
         self.show = show
         super(MyOwnEntryItem, self).__init__("%s %s" % (label, value), callback_func)
         self.max_length = max_length
+        self.background = CollidableRectSprite("text", -15, -15, pipeWidth/2, pipeHeight/2)
+        self.add(self.background, z = -1);
 
     def on_text(self, text):
         if self.max_length == 0 or len(self._value) < self.max_length:
@@ -267,6 +360,12 @@ class MyOwnEntryItem(MenuItem):
         self.item.text = new_text
         self.item_selected.text = new_text
 
+    def OwnGenerateWidgets(self, pos_x, pos_y, font_item, font_item_selected):
+        self.generateWidgets(pos_x, pos_y, font_item, font_item_selected)
+        self.background.position = (pos_x, pos_y)
+        width, height = director.get_window_size()
+        self.background.scale_x = width * 0.7 / self.background.width
+        self.background.scale_y = self.get_item_height() * 1.0 / self.background.height
 
 class SingleLoginMenu(Menu):
     def __init__(self):
@@ -299,23 +398,29 @@ class SingleLoginMenu(Menu):
         self.font_item_selected['font_size'] = 17
         self.font_item_selected['color'] = (0, 0, 0, 255)
         self.font_item['color'] = (0, 0, 0, 255)
-        usertext.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 2, self.font_item, self.font_item_selected)
-        passtext.generateWidgets(pos_x, pos_y, self.font_item, self.font_item_selected)
+        usertext.OwnGenerateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 2 + 25, self.font_item, self.font_item_selected)
+        passtext.OwnGenerateWidgets(pos_x, pos_y + 25, self.font_item, self.font_item_selected)
         self.font_item_selected['font_size'] = 15
-        userlabel.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 3, self.font_item, self.font_item_selected)
-        passlabel.generateWidgets(pos_x, pos_y + self.font_item['font_size'] + 8, self.font_item, self.font_item_selected)
+        userlabel.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 3 + 25, self.font_item, self.font_item_selected)
+        passlabel.generateWidgets(pos_x, pos_y + self.font_item['font_size'] + 8 + 25, self.font_item, self.font_item_selected)
 
     def gameLogin(self):
         '''在这里添加帐号密码判断的逻辑'''
         '''下面是当帐号密码通过时的操作'''
         LeaveLoginContext()
-        start_button = SingleGameStartMenu()
-        gameLayer.add(start_button, z=90, name="start_button")
+        global current
+        current = SingleGameStartMenu()
+        global currentMenu
+        currentMenu = "start_button"
+        gameLayer.add(current, z=90, name="start_button")
 
     def gameRegister(self):
         LeaveLoginContext()
-        register_button = SingleRegisterMenu()
-        gameLayer.add(register_button, z=90, name="register_button")
+        global current
+        current = SingleRegisterMenu()
+        global currentMenu
+        currentMenu = "register_button"
+        gameLayer.add(current, z=90, name="register_button")
 
     def gameUsername(self, value):
         '''这里的value是输入的帐号'''
@@ -359,13 +464,13 @@ class SingleRegisterMenu(Menu):
         self.font_item_selected['font_size'] = 17
         self.font_item_selected['color'] = (0, 0, 0, 255)
         self.font_item['color'] = (0, 0, 0, 255)
-        usertext.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 4, self.font_item, self.font_item_selected)
-        passtext.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 2, self.font_item, self.font_item_selected)
-        passagaintext.generateWidgets(pos_x, pos_y, self.font_item, self.font_item_selected)
+        usertext.OwnGenerateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 4 + 25, self.font_item, self.font_item_selected)
+        passtext.OwnGenerateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 2 + 25, self.font_item, self.font_item_selected)
+        passagaintext.OwnGenerateWidgets(pos_x, pos_y + 25, self.font_item, self.font_item_selected)
         self.font_item_selected['font_size'] = 15
-        userlabel.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 5, self.font_item, self.font_item_selected)
-        passlabel.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 3, self.font_item, self.font_item_selected)
-        passagainlabel.generateWidgets(pos_x, pos_y + self.font_item['font_size'] + 8, self.font_item, self.font_item_selected)
+        userlabel.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 5 + 25, self.font_item, self.font_item_selected)
+        passlabel.generateWidgets(pos_x, pos_y + (self.font_item['font_size'] + 8) * 3 + 25, self.font_item, self.font_item_selected)
+        passagainlabel.generateWidgets(pos_x, pos_y + self.font_item['font_size'] + 8 + 25, self.font_item, self.font_item_selected)
 
     def gameRegister(self):
         '''在这里添加注册的判断逻辑'''
@@ -386,8 +491,11 @@ class SingleRegisterMenu(Menu):
         print value
 
 def AddLoginContext():
-    login_botton = SingleLoginMenu()
-    gameLayer.add(login_botton, z=20, name="login_button")
+    global current
+    current = SingleLoginMenu()
+    global currentMenu
+    currentMenu = "login_button"
+    gameLayer.add(current, z=20, name="login_button")
     # start_button = SingleGameStartMenu()
     # gameLayer.add(start_button, z=90, name="start_button")
 
