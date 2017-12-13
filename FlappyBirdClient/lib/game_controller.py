@@ -32,16 +32,18 @@ startLayer = None
 pipes = None
 score = 0
 listener = None
-account = None
-password = None
 ipTextField = None
 errorLabel = None
 isGamseStart = False
 #难度选择 0是简单 1是普通 2是困难
 difficulty = 0
-#当前所处页面使用的menu（若无为None）
+#当前所处页面使用的menu（若无为None)
 currentMenu = None
 current = None
+#账号信息
+account = None
+password = None
+passwordRepeat = None
 
 def initGameLayer():
     global spriteBird, gameLayer, land_1, land_2
@@ -411,13 +413,12 @@ class SingleLoginMenu(Menu):
 
     def gameLogin(self):
         '''在这里添加帐号密码判断的逻辑'''
-        '''下面是当帐号密码通过时的操作'''
-        LeaveLoginContext()
-        global current
-        current = SingleGameStartMenu()
-        global currentMenu
-        currentMenu = "start_button"
-        gameLayer.add(current, z=90, name="start_button")
+        connected = connect(gameScene) # connect is from network.py
+        if not connected:
+            content = "Cannot connect to server"
+            showContent(content)
+        else:
+            request_sign_in(account, password) # request_notice is from network.py
 
     def gameRegister(self):
         LeaveLoginContext()
@@ -444,6 +445,9 @@ class SingleLoginMenu(Menu):
 class SingleRegisterMenu(Menu):
     def __init__(self):
         super(SingleRegisterMenu, self).__init__()
+        #初始化账号信息为空
+        initializeRegisterInformation()
+        
         userlabel = MenuItem('Username:', None)
         usertext = MyOwnEntryItem('', True, self.gameUsername, "", 12)
         passlabel = MenuItem('Password:', None)
@@ -483,20 +487,29 @@ class SingleRegisterMenu(Menu):
 
     def gameRegister(self):
         '''在这里添加注册的判断逻辑'''
-        '''下面是注册成功时的操作'''
-        gameLayer.remove("register_button")
-        AddLoginContext()
+        connected = connect(gameScene) # connect is from network.py
+        if not connected:
+            content = "Cannot connect to server"
+            showContent(content)
+        else:
+            request_sign_up(account, password) # request_notice is from network.py
 
     def gameUsername(self, value):
         '''这里的value是输入的帐号'''
+        global account
+        account = value
         print value
 
     def gamePassword(self, value):
         '''这里的value是输入的密码'''
+        global password
+        password = value
         print value
 
     def gamePasswordAgain(self, value):
         '''这里的value是输入的确认密码'''
+        global passwordRepeat
+        passwordRepeat = value
         print value
 
 def AddLoginContext():
@@ -511,11 +524,27 @@ def AddLoginContext():
 def LeaveLoginContext():
     gameLayer.remove("login_button")
 
-def getPassWord():
-    return password
+#register success, update UI
+def registerSuccessOp():
+    '''下面是注册成功时的操作'''
+    print("register success\n")
+    removeContent()
+    gameLayer.remove("register_button")
+    AddLoginContext()
 
-def getAccount():
-    return account
+#sign in success, updata UI
+def signInSuccessOp():
+    '''下面是当帐号密码通过时的操作'''
+    LeaveLoginContext()
+    global current
+    current = SingleGameStartMenu()
+    global currentMenu
+    currentMenu = "start_button"
+    gameLayer.add(current, z=90, name="start_button")    
+   
+def initializeRegisterInformation():
+    global account, password, passwordRepeat
+    account = None
+    password = None
+    passwordRepeat = None
     
-def getDifficulity():
-    return difficulty

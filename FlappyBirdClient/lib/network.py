@@ -38,10 +38,38 @@ def connect(gameScene):
         if 'notice_content' in data:
             import game_controller
             game_controller.showContent(data['notice_content']) #showContent is from game_controller
-
+        
+        if 'sign_up_result' in data:
+            fix_sign_up_result(data)
+        
+        if 'sign_in_result' in data:
+            fix_sign_in_result(data)
+            
     gameScene.schedule(receiveServer)
     return connected
 
+def fix_sign_up_result(data):
+    import game_controller
+    if data['sign_up_result'] == "Failed":
+        content = "The userName has been used. Please try again."
+        game_controller.showContent(content)
+    if data['sign_up_result'] == "Success":
+        content = "Register Success!"
+        game_controller.showContent(content)
+        game_controller.registerSuccessOp()
+        
+def fix_sign_in_result(data):
+    import game_controller
+    if data['sign_in_result'] == "notAUser":
+        content = "userName is not exist"
+        game_controller.showContent(content)
+    elif data['sign_in_result'] == "passwordError":
+        content = "Password error"
+        game_controller.showContent(content)
+    elif data['sign_in_result'] == "success":
+        game_controller.signInSuccessOp()
+
+ 
 def get_send_data():
     send_data = {}
     send_data['sid'] = serialID
@@ -51,4 +79,18 @@ def get_send_data():
 def request_notice():
     send_data = get_send_data()
     send_data['notice'] = 'request notice'
+    netstream.send(sock, send_data)
+    
+#向server发送注册信息
+def request_sign_up(account, password):
+    data = str(account) + '\t' + str(password)
+    send_data = get_send_data()
+    send_data['sign_up'] = str(data)
+    netstream.send(sock, send_data)
+    
+#向server发送登陆信息
+def request_sign_in(account, password):
+    data = str(account) + '\t' + str(password)
+    send_data = get_send_data()
+    send_data['sign_in'] = data
     netstream.send(sock, send_data)

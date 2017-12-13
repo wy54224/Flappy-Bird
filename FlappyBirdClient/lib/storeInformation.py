@@ -21,7 +21,9 @@ def WriteResult_tmp(Score, Time):
 	File_Information.close()
 	
 def Clear_tmp():
-	File_Information.truncate()
+    File_Information = os.path.join(TEMPDIR, 'tmp_Information.tmp')
+    if os.path.exists(File_Information):
+        os.remove(File_Information)
 	
 # ######################
 # 存储格式

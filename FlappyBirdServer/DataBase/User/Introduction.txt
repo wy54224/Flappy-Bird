@@ -1,0 +1,5 @@
+Store Format:
+username-password     //the p
+	-0            //the best preformance of the user in difficulty 0
+	-1            //the best preformance of the user in difficulty 1
+	-2            //the best preformance of the user in difficulty 2
