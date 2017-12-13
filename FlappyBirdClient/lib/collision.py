@@ -10,13 +10,20 @@ from score import *
 from game_controller import *
 import common
 from pipe import pipeDistance
+import time
+import storeInformation
 
 # contactListener
 collision_manager = None
 collision_func = None
 
+# 判断是否跟新过结果（只第一次才更新结果）
+update = False
+
 def addCollision(gameScene, gameLayer, spriteBird, pipes, land_1, land_2):
-    global collision_manager, collision_func, upPipeCollided, isCollided
+    global collision_manager, collision_func, upPipeCollided, isCollided, update
+    #初始化为未跟新结果
+    update = False
     #设置land区域对应的刚体
     landSprite = CollidableRectSprite("land", (common.visibleSize["width"])/2, (atlas["land"]["height"] / 4 - 3), (common.visibleSize["width"])/2, (atlas["land"]["height"])/2)
 
@@ -70,6 +77,12 @@ def addCollision(gameScene, gameLayer, spriteBird, pipes, land_1, land_2):
     gameScene.schedule(collisionHandler)
 
 def gameOver(gameScene, land_1, land_2, spriteBird, upPipeCollided):
+	#游戏结束，记录本局结果
+    global update
+    if not update:
+        updateGameResult()
+        update = True
+	
     global collision_func
     land_1.stop()
     land_2.stop()
@@ -82,3 +95,13 @@ def gameOver(gameScene, land_1, land_2, spriteBird, upPipeCollided):
         spriteBird.stop()
         import game_controller
         game_controller.backToMainMenu()
+
+def updateGameResult():
+    from pipe import g_score
+    from game_controller import account
+    from game_controller import TimeStart
+    from game_controller import difficulty
+    Time_End = time.clock()
+    elapsed = Time_End - TimeStart
+    WriteResult_tmp(g_score, elapsed)
+    WriteResult_HistoryResult(account, g_score, elapsed, difficulty)

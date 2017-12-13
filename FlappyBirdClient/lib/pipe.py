@@ -8,6 +8,8 @@ from bird import *
 from score import *
 from game_controller import *
 import common
+import time
+from storeInformation import *
 
 # constants
 pipeCount = 2
@@ -82,6 +84,13 @@ def createPipes(layer, gameScene, spriteBird, score, speed):
             if pipeState[i] == PIPE_NEW and pipes[i].position[0]< birdXPosition:
                 pipeState[i] = PIPE_PASS
                 g_score = g_score + 1
+				#pass a pipe, then store imformation
+                from game_controller import TimeStart
+                #TimeStart = GetTimeStart()
+                now_time = time.clock()
+                elapsed = now_time - TimeStart
+                WriteInformation_tmp(g_score, elapsed)
+				#---------------------------------------
                 setSpriteScores(g_score) #show score on top of screen
 
     g_score = score

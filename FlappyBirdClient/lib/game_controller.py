@@ -15,11 +15,14 @@ from collision import *
 from network import *
 import common
 import random
+import time
+import storeInformation
 from six import string_types
 from pyglet.window import key
 from pyglet import font
 
 #vars
+TimeStart =  None
 gameLayer = None
 gameScene = None
 spriteBird = None
@@ -112,7 +115,9 @@ def singleGameReady():
         # ready layer的回调函数
         def singleGameStart(self, eventType, x, y):
             isGamseStart = True
-
+            global TimeStart
+            TimeStart = time.clock()
+			
             spriteBird.gravity = gravity #gravity is from bird.py
             # handling bird touch events
             addTouchHandler(gameScene, isGamseStart, spriteBird)
@@ -424,11 +429,15 @@ class SingleLoginMenu(Menu):
 
     def gameUsername(self, value):
         '''这里的value是输入的帐号'''
+        global account
+        account = value
         print value
         pass
 
     def gamePassword(self, value):
         '''这里的value是输入的密码'''
+        global password
+        password = value
         print value
         pass
 
@@ -501,3 +510,12 @@ def AddLoginContext():
 
 def LeaveLoginContext():
     gameLayer.remove("login_button")
+
+def getPassWord():
+    return password
+
+def getAccount():
+    return account
+    
+def getDifficulity():
+    return difficulty
