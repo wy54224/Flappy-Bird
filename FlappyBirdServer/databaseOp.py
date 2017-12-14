@@ -19,7 +19,7 @@ def Sign_up(data):
         print("Error: sign_in data has error")
     userName = dataList[0]
     password = dataList[1]
-    
+
     #write in the database
     path = os.path.normpath(os.path.join(DATADIR, 'User'))
     for i in range(len(str(userName))):
@@ -36,7 +36,7 @@ def Sign_up(data):
         print("User is not exists\n")
         WriteUserInformation(path, password)
     return 0
-        
+
 def Sign_in(data):
     #get information
     data = data.strip()
@@ -46,11 +46,16 @@ def Sign_in(data):
     userName = dataList[0]
     password = dataList[1]
     #print checkUser(userName, password)
+    #print userName
+    #print password
     return checkUser(userName, password)
 
 def checkUser(userName, password):
-    path = os.path.normpath(os.path.join(DATADIR, 'User'))
+    #path = os.path.normpath(os.path.join(DATADIR, 'User'))
+    path = os.path.normpath('./DataBase/User')
+    #print path
     for i in range(len(str(userName))):
+        #print userName[i]
         path = os.path.join(path, userName[i])
         if not os.path.exists(path):
             return NotAUser
@@ -64,18 +69,18 @@ def checkUser(userName, password):
             return PasswordError
     else:
         return NotAUser
-        
+
 def WriteUserInformation(path, password):
     file = open(path, 'w')
     information = str(password)
     file.write(information)
     file.close()
-    
+
 def ReadPassword(path):
     file = open(path, 'r')
     password = file.read()
     return password
-    
+
 #Sign_up("mine\t123456")
 #Sign_in("mie\t123456")
 #Sign_in("mine\t123455")
