@@ -41,6 +41,13 @@ def fix_sign_in(recvData):
         sendData = {"sign_in_result": "success"}
         netstream.send(onlineUser[number]['connection'], sendData)
 
+def fix_game_result(recvData):
+    number = recvData['sid']
+    print 'receive sign_up request from user id:', number
+    result = databaseOp.store_Result(recvData['game_result'])
+    if result == databaseOp.FAILED:
+        print 'Error: the user ', number, ' store game_result failed'
+        
 if __name__ == "__main__":
 	s = socket.socket()
 
@@ -95,6 +102,8 @@ while inputs:
                         fix_sign_up(recvData)
                     elif 'sign_in' in recvData:
                         fix_sign_in(recvData)
+                    elif 'game_result' in recvData:
+                        fix_game_result(recvData)
     except Exception:
         traceback.print_exc()
         print 'Error: socket 链接异常'

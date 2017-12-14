@@ -94,3 +94,9 @@ def request_sign_in(account, password):
     send_data = get_send_data()
     send_data['sign_in'] = data
     netstream.send(sock, send_data)
+    
+def request_send_result(account, score, survival_time, diificulty):
+    data = str(account) + '\t' + str(score) + '\t' + str(survival_time) + '\t' + str(diificulty)
+    send_data = get_send_data()
+    send_data['game_result'] = data
+    netstream.send(sock, send_data)

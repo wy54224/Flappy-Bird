@@ -5,11 +5,15 @@ import re
 #用于注册
 UserHasExisted = -1
 #用于登陆
-NotAUser = -1
-PasswordError = -2
+NotAUser = -2
+PasswordError = -3
+#写入信息
+FAILED = -4
+SUCCESS = 0
+#存储每个用户最好的成绩的个数
+MAX_ITEM = 3
 
-THISDIR = os.path.abspath(os.path.dirname(__file__))
-DATADIR = os.path.normpath(os.path.join(THISDIR, 'DataBase'))
+DATADIR = os.path.normpath(os.path.join('.', 'DataBase'))
 
 def Sign_up(data):
     #get information
@@ -48,6 +52,20 @@ def Sign_in(data):
     #print checkUser(userName, password)
     return checkUser(userName, password)
 
+def store_Result(data):
+    data = data.strip()
+    dataList = data.split('\t')
+    if len(dataList) != 4:
+        print("Error: result data has error")
+    userName = dataList[0]
+    score = dataList[1]
+    survivalTime = dataList[2]
+    difficulty = dataList[3]
+    result = store_result_in_UserBest(userName, score, survivalTime, difficulty)
+    store_result_in_rank(userName, score, survivalTime, difficulty)
+    return result
+    
+#判断登陆信息是否正确
 def checkUser(userName, password):
     path = os.path.normpath(os.path.join(DATADIR, 'User'))
     for i in range(len(str(userName))):
@@ -65,18 +83,157 @@ def checkUser(userName, password):
     else:
         return NotAUser
         
+#写入password信息
 def WriteUserInformation(path, password):
     file = open(path, 'w')
     information = str(password)
     file.write(information)
     file.close()
     
+#读入password信息
 def ReadPassword(path):
     file = open(path, 'r')
     password = file.read()
     return password
     
-#Sign_up("mine\t123456")
-#Sign_in("mie\t123456")
-#Sign_in("mine\t123455")
-Sign_in("mine\t123456")
+#将结果存入用户表(存储最好MAX_ITEM次成绩)
+def store_result_in_UserBest(userName, score, survivalTime, difficulty):
+    path = os.path.normpath(os.path.join(DATADIR, 'User'))
+    for i in range(len(str(userName))):
+        path = os.path.join(path, userName[i])
+        if not os.path.exists(path):
+            return FAILED
+    path = os.path.join(path, str(difficulty)+'.data')
+    information = str(score) + '\t' + str(survivalTime)
+    if not os.path.exists(path):
+        file = open(path, 'w')
+        file.close()
+        
+    file = open(path, 'r')
+    DataMat = getRank(file, score, survivalTime)
+    file.close()
+    file = open(path, 'w')
+    for i in range(len(DataMat)):
+        data = str(DataMat[i][0]) + '\t' + str(DataMat[i][1]) + '\t' + str(DataMat[i][2]) + '\n'
+        file.write(data)
+    file.close()
+    return SUCCESS
+        
+def store_result_in_rank(userName, score, survivalTime, difficulty):
+    path = createDir(DATADIR, 'Rank')
+    path = createDir(path, str(difficulty))
+    totalRankPath = os.path.normpath(os.path.join(path, 'TotalRank.data'))
+    changeTotalRank(totalRankPath, score)  #更新主索引文件夹
+    
+    path = createDir(path, str(score))          #进入了分数的子文件夹
+    path = os.path.normpath(os.path.join(path, 'Rank.data'))
+    changeRank(path, userName, survivalTime)
+    
+    
+#判断游戏结果排在第几位,并将其插入数据中
+def getRank(File, Score, Time):
+	arrayOfLines = File.readlines()
+	numOfLines = len(arrayOfLines)
+	DataMat = []
+	#解析文件数据到DataMat
+	index = 0
+	isInsert = False
+	for line in arrayOfLines:
+		line = line.strip()
+		listFromLine = line.split('\t')
+		if len(listFromLine) == 3:
+			DataMat.append(listFromLine[0:3])
+			if not isInsert and cmp(Score, DataMat[index][1], Time, DataMat[index][2]):
+				#找到了插入的位置
+				temp = DataMat[index]
+				DataMat[index] = [0, Score, Time]
+				DataMat.append(temp)
+				index += 1
+				isInsert = True
+			index += 1
+			if index >= MAX_ITEM:
+				break;
+		else:
+			print("Error: Read Data File Error\n")
+			break;	
+	
+	#如果文件没有被插入进数据中，并且数据还有空位
+	if len(DataMat) < MAX_ITEM and not isInsert:
+		DataMat.append([0, Score, Time])
+	# update number
+	for i in range(len(DataMat)):
+		DataMat[i][0] = i + 1
+	return DataMat
+
+#更新总排名表的主索引文件
+def changeTotalRank(path, score):
+    if not os.path.exists(path):
+        rankFile = open(path, 'w')
+        rankFile.close()
+    #读出数据
+    DataMat = readData(path, 2)
+    
+    #修改数据
+    insert = False
+    length = len(DataMat)
+    for i in range(length):
+        if int(score) == int(DataMat[i][0]):
+            DataMat[i][1] = str(int(DataMat[i][1]) + int(1))
+            insert = True
+            break
+        elif int(score) < int(DataMat[i][0]) and int(score) != int(DataMat[i-1][0]):
+            DataMat.insert(i, [str(score), str(1)])
+            insert = True
+            break
+    if not insert:
+        DataMat.append([str(score), str(1)])
+    #写回数据
+    writeData(path, 2, DataMat)
+        
+#更新某分数下的rank文件
+def changeRank(path, userName, Time):
+    if not os.path.exists(path):
+        rankFile = open(path, 'w')
+        rankFile.close()
+    rankFile = open(path, 'a')
+    information = str(userName) + '\t' + str(Time) + '\n'
+    rankFile.write(information)
+    rankFile.close()
+
+
+#比较算子        
+def cmp(Score1, Score2, Time1, Time2):
+	if int(Score1) > int(Score2):
+		return True
+	elif int(Score1) == int(Score2):
+		return Time1 > Time2
+	else:
+		return False    
+        
+def createDir(path, child):
+    path = os.path.normpath(os.path.join(path, child))
+    if not os.path.exists(path):
+        os.mkdir(path)
+    return path
+    
+def readData(path, numOfLines):
+    totalRankFile = open(path, 'r')
+    DataMat = []
+    arrayOfLines = totalRankFile.readlines()
+    for line in arrayOfLines:
+        line = line.strip()
+        listFromLine = line.split('\t')
+        if len(listFromLine) == numOfLines:
+            DataMat.append(listFromLine[0:numOfLines])
+    totalRankFile.close()
+    return DataMat
+    
+def writeData(path, numOfLines, DataMat):
+    totalRankFile= open(path, 'w')
+    for i in range(len(DataMat)):
+        data = ""
+        for j in range(numOfLines):
+            data += (str(DataMat[i][j]) + '\t')
+        data += '\n'
+        totalRankFile.write(data)
+    totalRankFile.close()
