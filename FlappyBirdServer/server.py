@@ -41,13 +41,17 @@ def fix_sign_in(recvData):
         sendData = {"sign_in_result": "success"}
         netstream.send(onlineUser[number]['connection'], sendData)
 
+#处理收到游戏结果的消息
 def fix_game_result(recvData):
     number = recvData['sid']
     print 'receive sign_up request from user id:', number
-    result = databaseOp.store_Result(recvData['game_result'])
-    if result == databaseOp.FAILED:
-        print 'Error: the user ', number, ' store game_result failed'
-        
+    bestScore, bestTime, totalPerson, myRank = databaseOp.store_Result(recvData['game_result'])
+    number = recvData['sid']
+    #给客户端发送排名信息
+    information = str(bestScore) + '\t' + str(bestTime) + '\t' + str(totalPerson) + '\t' + str(myRank)
+    sendData = {"re_game_result": information}
+    netstream.send(onlineUser[number]['connection'], sendData)
+       
 if __name__ == "__main__":
 	s = socket.socket()
 

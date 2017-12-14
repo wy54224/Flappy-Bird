@@ -61,9 +61,9 @@ def store_Result(data):
     score = dataList[1]
     survivalTime = dataList[2]
     difficulty = dataList[3]
-    result = store_result_in_UserBest(userName, score, survivalTime, difficulty)
-    store_result_in_rank(userName, score, survivalTime, difficulty)
-    return result
+    bestScore, bestTime = store_result_in_UserBest(userName, score, survivalTime, difficulty)
+    totalPerson, myRank = store_result_in_rank(userName, score, survivalTime, difficulty)
+    return bestScore, bestTime, totalPerson, myRank
     
 #判断登陆信息是否正确
 def checkUser(userName, password):
@@ -101,14 +101,11 @@ def store_result_in_UserBest(userName, score, survivalTime, difficulty):
     path = os.path.normpath(os.path.join(DATADIR, 'User'))
     for i in range(len(str(userName))):
         path = os.path.join(path, userName[i])
-        if not os.path.exists(path):
-            return FAILED
     path = os.path.join(path, str(difficulty)+'.data')
     information = str(score) + '\t' + str(survivalTime)
     if not os.path.exists(path):
         file = open(path, 'w')
         file.close()
-        
     file = open(path, 'r')
     DataMat = getRank(file, score, survivalTime)
     file.close()
@@ -117,20 +114,21 @@ def store_result_in_UserBest(userName, score, survivalTime, difficulty):
         data = str(DataMat[i][0]) + '\t' + str(DataMat[i][1]) + '\t' + str(DataMat[i][2]) + '\n'
         file.write(data)
     file.close()
-    return SUCCESS
+    return DataMat[0][1], DataMat[0][2]
         
 def store_result_in_rank(userName, score, survivalTime, difficulty):
     path = createDir(DATADIR, 'Rank')
     path = createDir(path, str(difficulty))
     totalRankPath = os.path.normpath(os.path.join(path, 'TotalRank.data'))
-    changeTotalRank(totalRankPath, score)  #更新主索引文件夹
+    
+    TotalPerson, myRank = changeTotalRank(totalRankPath, score)  #更新主索引文件,并获得排名
     
     path = createDir(path, str(score))          #进入了分数的子文件夹
     path = os.path.normpath(os.path.join(path, 'Rank.data'))
     changeRank(path, userName, survivalTime)
+    return TotalPerson, myRank
     
-    
-#判断游戏结果排在第几位,并将其插入数据中
+#判断游戏结果在自己最高成绩中排在第几位,并将其插入数据中
 def getRank(File, Score, Time):
 	arrayOfLines = File.readlines()
 	numOfLines = len(arrayOfLines)
@@ -165,8 +163,10 @@ def getRank(File, Score, Time):
 		DataMat[i][0] = i + 1
 	return DataMat
 
-#更新总排名表的主索引文件
+#更新总排名表的主索引文件,同时可以获取到该用户的排名
 def changeTotalRank(path, score):
+    TotalPerson = 1
+    myRank = 1
     if not os.path.exists(path):
         rankFile = open(path, 'w')
         rankFile.close()
@@ -177,18 +177,20 @@ def changeTotalRank(path, score):
     insert = False
     length = len(DataMat)
     for i in range(length):
-        if int(score) == int(DataMat[i][0]):
+        TotalPerson += int(DataMat[i][1])
+        if int(score) == int(DataMat[i][0]) and not insert:
             DataMat[i][1] = str(int(DataMat[i][1]) + int(1))
             insert = True
-            break
-        elif int(score) < int(DataMat[i][0]) and int(score) != int(DataMat[i-1][0]):
+        elif int(score) > int(DataMat[i][0]) and int(score) != int(DataMat[i-1][0]) and not insert:
             DataMat.insert(i, [str(score), str(1)])
             insert = True
-            break
+        if not insert:
+            myRank += int(DataMat[i][1])
     if not insert:
         DataMat.append([str(score), str(1)])
     #写回数据
     writeData(path, 2, DataMat)
+    return TotalPerson, myRank
         
 #更新某分数下的rank文件
 def changeRank(path, userName, Time):
