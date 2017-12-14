@@ -13,6 +13,7 @@ from score import *
 from pipe import *
 from collision import *
 from network import *
+from regular_expression import *
 import common
 import random
 import time
@@ -413,12 +414,17 @@ class SingleLoginMenu(Menu):
 
     def gameLogin(self):
         '''在这里添加帐号密码判断的逻辑'''
-        connected = connect(gameScene) # connect is from network.py
-        if not connected:
-            content = "Cannot connect to server"
-            showContent(content)
+        import regular_expression
+        if regular_expression.userNameMatchFinal(account) and regular_expression.passwordMatchFinal(password):
+            connected = connect(gameScene) # connect is from network.py
+            if not connected:
+                content = "Cannot connect to server"
+                showContent(content)
+            else:
+                request_sign_in(account, password) # request_notice is from network.py
         else:
-            request_sign_in(account, password) # request_notice is from network.py
+            content = 'password or account has wrong format, please try again'
+            showContent(content)
 
     def gameRegister(self):
         LeaveLoginContext()
@@ -430,6 +436,7 @@ class SingleLoginMenu(Menu):
 
     def gameUsername(self, value):
         '''这里的value是输入的帐号'''
+        removeContent()
         global account
         account = value
         print value
@@ -437,6 +444,7 @@ class SingleLoginMenu(Menu):
 
     def gamePassword(self, value):
         '''这里的value是输入的密码'''
+        removeContent()
         global password
         password = value
         print value
@@ -487,29 +495,64 @@ class SingleRegisterMenu(Menu):
 
     def gameRegister(self):
         '''在这里添加注册的判断逻辑'''
-        connected = connect(gameScene) # connect is from network.py
-        if not connected:
-            content = "Cannot connect to server"
-            showContent(content)
-        else:
-            request_sign_up(account, password) # request_notice is from network.py
+        import regular_expression
+        if regular_expression.userNameMatchFinal(account) and regular_expression.passwordMatchFinal(password):
+            connected = connect(gameScene) # connect is from network.py
+            if not connected:
+                content = "Cannot connect to server"
+                showContent(content)
+            else:
+                request_sign_up(account, password) # request_notice is from network.py
 
     def gameUsername(self, value):
+        removeContent()
         '''这里的value是输入的帐号'''
         global account
         account = value
+        #---进行用户名格式判断---#
+        import regular_expression
+        result = regular_expression.userNameMatch(account)
+        print result
+        if result == regular_expression.FIRSTPOS_ERROR:
+            content = 'the first location of username must be a letter'
+            showContent(content)
+        elif result == regular_expression.CHARACTER_ERROR:
+            content = 'username can only contain letter, number, underline'
+            showContent(content)
+        elif result == regular_expression.LENGTH_ERROR:
+            content = 'the length of username should be less than 16 characters'
+            showContent(content)
+        #------------------------#
         print value
 
     def gamePassword(self, value):
+        removeContent()
         '''这里的value是输入的密码'''
         global password
         password = value
+        #---进行密码格式判断---#
+        import regular_expression
+        result = regular_expression.passwordPatternMatch(password)
+        if result == regular_expression.CHARACTER_ERROR:
+            content = 'password can not contain space, tab and so on'
+            showContent(content)
+        elif result == regular_expression.LENGTH_ERROR:
+            content = 'the lenth of password should be between 6 and 16 characters'
+            showContent(content)
+        #------------------------#
         print value
 
     def gamePasswordAgain(self, value):
+        removeContent()
         '''这里的value是输入的确认密码'''
         global passwordRepeat
         passwordRepeat = value
+        #---判断两次密码是否相等---#
+        import regular_expression
+        if not regular_expression.passwordSame(password, passwordRepeat):
+            content = 'the two password is not same, please check them again'
+            showContent(content)
+        #--------------------------#
         print value
 
 def AddLoginContext():
