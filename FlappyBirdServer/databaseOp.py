@@ -43,12 +43,14 @@ def Sign_up(data):
         
 def Sign_in(data):
     #get information
+    #print 'Sign_in start'
     data = data.strip()
     dataList = data.split('\t')
     if len(dataList) != 2:
         print("Error: sign_in data has error")
     userName = dataList[0]
     password = dataList[1]
+    #print 'Sign_in end'
     #print checkUser(userName, password)
     return checkUser(userName, password)
 
@@ -62,8 +64,8 @@ def store_Result(data):
     survivalTime = dataList[2]
     difficulty = dataList[3]
     bestScore, bestTime = store_result_in_UserBest(userName, score, survivalTime, difficulty)
-    totalPerson, myRank = store_result_in_rank(userName, score, survivalTime, difficulty)
-    return bestScore, bestTime, totalPerson, myRank
+    defeat, myRank = store_result_in_rank(userName, score, survivalTime, difficulty)
+    return bestScore, bestTime, defeat, myRank
     
 #判断登陆信息是否正确
 def checkUser(userName, password):
@@ -121,12 +123,12 @@ def store_result_in_rank(userName, score, survivalTime, difficulty):
     path = createDir(path, str(difficulty))
     totalRankPath = os.path.normpath(os.path.join(path, 'TotalRank.data'))
     
-    TotalPerson, myRank = changeTotalRank(totalRankPath, score)  #更新主索引文件,并获得排名
+    defeat, myRank = changeTotalRank(totalRankPath, score)  #更新主索引文件,并获得排名
     
     path = createDir(path, str(score))          #进入了分数的子文件夹
     path = os.path.normpath(os.path.join(path, 'Rank.data'))
     changeRank(path, userName, survivalTime)
-    return TotalPerson, myRank
+    return defeat, myRank
     
 #判断游戏结果在自己最高成绩中排在第几位,并将其插入数据中
 def getRank(File, Score, Time):
@@ -165,8 +167,9 @@ def getRank(File, Score, Time):
 
 #更新总排名表的主索引文件,同时可以获取到该用户的排名
 def changeTotalRank(path, score):
-    TotalPerson = 1
+    TotalPerson = 0
     myRank = 1
+    nextRank = 1
     if not os.path.exists(path):
         rankFile = open(path, 'w')
         rankFile.close()
@@ -177,20 +180,29 @@ def changeTotalRank(path, score):
     insert = False
     length = len(DataMat)
     for i in range(length):
-        TotalPerson += int(DataMat[i][1])
+        if not insert:
+            nextRank += int(DataMat[i][1])
         if int(score) == int(DataMat[i][0]) and not insert:
             DataMat[i][1] = str(int(DataMat[i][1]) + int(1))
             insert = True
         elif int(score) > int(DataMat[i][0]) and int(score) != int(DataMat[i-1][0]) and not insert:
+            nextRank -= int(DataMat[i][1])
             DataMat.insert(i, [str(score), str(1)])
             insert = True
         if not insert:
             myRank += int(DataMat[i][1])
     if not insert:
         DataMat.append([str(score), str(1)])
+    
+    for i in range(len(DataMat)):
+        TotalPerson += int(DataMat[i][1])
+        
     #写回数据
     writeData(path, 2, DataMat)
-    return TotalPerson, myRank
+    print TotalPerson, myRank, nextRank
+    defeat = TotalPerson - nextRank
+    defeat = float(defeat) / float(TotalPerson)
+    return defeat, myRank
         
 #更新某分数下的rank文件
 def changeRank(path, userName, Time):

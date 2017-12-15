@@ -29,3 +29,12 @@ def setSpriteScores(score):
         scoreLayer.add(s, z=50)
         spriteScores[i] = s
         i = i + 1
+
+def removeSpriteScores():
+    global scoreLayer
+    for k in spriteScores:
+        try:
+            scoreLayer.remove(spriteScores[k])
+            spriteScores[k] = None
+        except:
+            pass    

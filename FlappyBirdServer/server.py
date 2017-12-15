@@ -25,7 +25,7 @@ def fix_sign_up(recvData):
 #处理登陆消息 
 def fix_sign_in(recvData):
     number = recvData['sid']
-    print 'receive sign_up request from user id:', number
+    print 'receive sign_in request from user id:', number
     result = databaseOp.Sign_in(recvData['sign_in'])
     if result == databaseOp.NotAUser:
         #用户不存在
@@ -40,15 +40,17 @@ def fix_sign_in(recvData):
         number = recvData['sid']
         sendData = {"sign_in_result": "success"}
         netstream.send(onlineUser[number]['connection'], sendData)
+        #print onlineUser[number]['connection']
+        #print 'send success sign in result to', number
 
 #处理收到游戏结果的消息
 def fix_game_result(recvData):
     number = recvData['sid']
-    print 'receive sign_up request from user id:', number
-    bestScore, bestTime, totalPerson, myRank = databaseOp.store_Result(recvData['game_result'])
+    print 'receive game_result request from user id:', number
+    bestScore, bestTime, defeat, myRank = databaseOp.store_Result(recvData['game_result'])
     number = recvData['sid']
     #给客户端发送排名信息
-    information = str(bestScore) + '\t' + str(bestTime) + '\t' + str(totalPerson) + '\t' + str(myRank)
+    information = str(bestScore) + '\t' + str(bestTime) + '\t' + str(defeat) + '\t' + str(myRank)
     sendData = {"re_game_result": information}
     netstream.send(onlineUser[number]['connection'], sendData)
        

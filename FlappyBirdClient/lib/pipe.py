@@ -31,6 +31,8 @@ pipeIndex = 0
 movePipeFunc = None
 calScoreFunc = None
 
+g_score = 0
+
 class ActorModel(object):
     def __init__(self, cx, cy, half_width, half_height,name):
             self.cshape = CircleShape(eu.Vector2(center_x, center_y), radius)

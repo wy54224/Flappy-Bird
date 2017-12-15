@@ -32,6 +32,9 @@ land_2 = None
 startLayer = None
 pipes = None
 score = 0
+bestScore = 0
+myRank = 0
+totalDefeat = 0
 listener = None
 ipTextField = None
 errorLabel = None
@@ -45,6 +48,14 @@ current = None
 account = None
 password = None
 passwordRepeat = None
+#游戏结果panel的位置信息
+panel_pos_x = 0
+panel_pos_y = 0
+panel_size = 0
+newLabel = None
+scoreItem = None
+bestScoreItem = None
+rankItem = None
 
 def initGameLayer():
     global spriteBird, gameLayer, land_1, land_2
@@ -71,8 +82,7 @@ def game_start(_gameScene):
     initGameLayer()
     #start_botton = SingleGameStartMenu()
     #gameLayer.add(start_botton, z=20, name="start_button")
-    menu_button = SingleMainMenu()
-    gameLayer.add(menu_button, z=20, name="menu_button")
+    
     AddLoginContext()
     connect(gameScene)
 
@@ -118,13 +128,14 @@ def singleGameReady():
         # ready layer的回调函数
         def singleGameStart(self, eventType, x, y):
             isGamseStart = True
-            global TimeStart
+            global TimeStart, score, bestScore
             TimeStart = time.clock()
 			
             spriteBird.gravity = gravity #gravity is from bird.py
             # handling bird touch events
             addTouchHandler(gameScene, isGamseStart, spriteBird)
             score = 0   #分数，飞过一个管子得到一分
+            bestScore = 0
             # add moving pipes
             global difficulty
             if(difficulty == 0):
@@ -174,17 +185,124 @@ def removeContent():
         pass
 
 
+#将结果得分显示出来
+def showScore(score):
+    global scoreItem
+    scoreItem = cocos.text.Label(score, font_name='Times New Roman', font_size=15, anchor_x='center', anchor_y='center')
+    scoreItem.position = panel_pos_x + float(55) / 100 * panel_size, panel_pos_y + float(15) / 100 * panel_size
+    gameLayer.add(scoreItem, z=70, name="scoreItem")
+    
+#将最高分显示出来
+def showBest(best):
+    global bestScoreItem
+    bestScoreItem = cocos.text.Label(best, font_name='Times New Roman', font_size=15, anchor_x='center', anchor_y='center')
+    bestScoreItem.position = panel_pos_x + float(58) / 100 * panel_size, panel_pos_y - float(18) / 100 * panel_size
+    gameLayer.add(bestScoreItem, z=70, name="bestScoreItem")
+    
+#显示破纪录的标识
+def showNew():
+    global newLabel
+    newLabel = createAtlasSprite("new")
+    newLabel.name = "new"
+    newLabel.position = panel_pos_x + float(22) / 100 * panel_size, panel_pos_y - float(3) / 100 * panel_size
+    gameLayer.add(newLabel, z=70)
+  
+#显示排名
+def showRank(rank, defeat):
+    defeat = float(defeat) * 100
+    defeat = round(defeat, 2)
+    information = "rank: " + str(rank) + '\n' + "defeat: " + str(defeat) + "%" + " people"
+    showContent(information)
+
+#删除破纪录的标识
+def removeReslut():
+    global newLabel, bestScoreItem, scoreItem, rankItem
+    if newLabel != None:
+        try:
+            gameLayer.remove(newLabel)
+        except Exception, e:
+            pass
+        newLabel = None
+    if bestScoreItem != None:
+        try:
+            gameLayer.remove(bestScoreItem)
+        except Exception, e:
+            pass
+        bestScoreItem = None
+    if scoreItem != None:
+        try:
+            gameLayer.remove(scoreItem)
+        except Exception, e:
+            pass
+        scoreItem = None
+    if rankItem != None:
+        try:
+            gameLayer.remove(rankItem)
+        except Exception, e:
+            pass
+        rankItem = None
+    removeContent()
+    
+#显示结果
+def showResult(score, best, rank, defeat):
+    print 'in show result'
+    showScore(score)
+    showBest(best)
+    if score == best:
+        showNew()
+    showRank(rank, defeat)
+    
+#设置游戏结果
+def setResult(Score, best, rank, defeat):
+    global score, bestScore, myRank, totalDefeat
+    score = Score
+    bestScore = best
+    myRank = rank
+    totalDefeat = defeat
+        
 class RestartMenu(Menu):
     def __init__(self):
         super(RestartMenu, self).__init__()
-        self.menu_valign = CENTER
-        self.menu_halign = CENTER
+        #self.menu_valign = CENTER
+        #self.menu_halign = CENTER
+        removeSpriteScores()
+        gameOver_Item = ImageMenuItem(common.load_image("text_game_over.png"), None)
+        gamePanel_Item = ImageMenuItem(common.load_image("score_panel.png"), None)
+        restart_button = ImageMenuItem(common.load_image("button_restart.png"), self.initMainMenu)
+        difficulty_button = ImageMenuItem(common.load_image("button_difficulty.png"), self.initDifficultyMenu)
+        
         items = [
-                (ImageMenuItem(common.load_image("button_restart.png"), self.initMainMenu)),
-                (ImageMenuItem(common.load_image("button_difficulty.png"), self.initDifficultyMenu)),
-                (ImageMenuItem(common.load_image("button_notice.png"), showNotice))
+                gameOver_Item,
+                gamePanel_Item,
+                restart_button,
+                difficulty_button
                 ]
-        self.create_menu(items,selected_effect=zoom_in(),unselected_effect=zoom_out())
+        self.create_menu(items)
+        
+        width, height = director.get_window_size()
+        pos_x = width // 2
+        pos_y = height // 2
+        self.font_item['font_size'] = 42
+        self.font_item_selected['font_size'] = 45
+        restart_button.generateWidgets(pos_x - 48, pos_y - 50, self.font_item, self.font_item_selected)
+        difficulty_button.generateWidgets(pos_x + 48, pos_y - 50, self.font_item, self.font_item_selected)
+        self.font_item['font_size'] = 50
+        self.font_item['color'] = (255, 255, 255, 255)
+        self.font_item_selected['font_size'] = 50
+        self.font_item_selected['color'] = (255, 255, 255, 255)
+        gameOver_Item.generateWidgets(pos_x, pos_y + 135, self.font_item, self.font_item_selected)
+        #设置游戏结果的panel
+        global panel_pos_x, panel_pos_y, panel_size
+        panel_size = 100
+        panel_pos_x = pos_x
+        panel_pos_y = pos_y + 40
+        self.font_item['font_size'] = panel_size
+        self.font_item['color'] = (255, 255, 255, 255)
+        self.font_item_selected['font_size'] = panel_size
+        self.font_item_selected['color'] = (255, 255, 255, 255)
+        gamePanel_Item.generateWidgets(panel_pos_x, panel_pos_y, self.font_item, self.font_item_selected)
+        #showRank(str(14), str(42))
+        showResult(str(score), str(bestScore), str(myRank), str(totalDefeat))
 
     def initMainMenu(self):
         gameScene.remove(gameLayer)
@@ -281,14 +399,16 @@ class SingleMenu(Menu):
 
         def logOut(self):
             gameScene.remove("MainMenu")
-            gameOver(gameScene, land_1, land_2, spriteBird, True)
-            if(currentMenu == "restart_button" and current):
-                gameLayer.remove(currentMenu)
+            removeSchedule(gameScene)
+            gameScene.resume_scheduler()
+            print currentMenu, current
+            #if(currentMenu == "restart_button" and current):
+             #   gameLayer.remove(currentMenu)
             gameScene.remove(gameLayer)
             initGameLayer()
             isGamseStart = False
-            menu_button = SingleMainMenu()
-            gameLayer.add(menu_button, z=20, name="menu_button")
+            #menu_button = SingleMainMenu()
+            #gameLayer.add(menu_button, z=20, name="menu_button")
             AddLoginContext()
 
 '''Menu按钮'''
@@ -307,11 +427,13 @@ class SingleMainMenu(Menu):
         Menu.generateWidgets(pos_x, pos_y, self.font_item, self.font_item_selected)
 
     def showMain(self):
+        removeReslut()
         self.isShow = not self.isShow
         global current
         global currentMenu
         global isPause
         if(self.isShow):
+            print 'pause'
             spriteBird.pause()
             gameScene.pause_scheduler()
             singlemenu = SingleMenu()
@@ -319,6 +441,7 @@ class SingleMainMenu(Menu):
             if(currentMenu and current):
                 gameLayer.remove(currentMenu)
         else:
+            print 'resume'
             gameScene.remove("MainMenu")
             spriteBird.resume()
             gameScene.resume_scheduler()
@@ -425,7 +548,7 @@ class SingleLoginMenu(Menu):
         else:
             content = 'password or account has wrong format, please try again'
             showContent(content)
-
+            
     def gameRegister(self):
         LeaveLoginContext()
         global current
@@ -463,6 +586,7 @@ class SingleRegisterMenu(Menu):
         passagainlabel = MenuItem('Password Again:', None)
         passagaintext = MyOwnEntryItem('', False, self.gamePasswordAgain, "", 12)
         registerbutton = ImageMenuItem(common.load_image("button_register.png"), self.gameRegister)
+        gobackbutton = ImageMenuItem(common.load_image("button_play.png"), self.gameGoback) 
         self.font_item['font_size'] = 15
         self.font_item_selected['font_size'] = 17
         items = [
@@ -472,7 +596,8 @@ class SingleRegisterMenu(Menu):
                 passtext,
                 passagainlabel,
                 passagaintext,
-                registerbutton
+                registerbutton,
+                gobackbutton
                 ]
         self.create_menu(items)
         width, height = director.get_window_size()
@@ -480,7 +605,8 @@ class SingleRegisterMenu(Menu):
         pos_y = height // 2
         self.font_item['font_size'] = 38
         self.font_item_selected['font_size'] = 39
-        registerbutton.generateWidgets(pos_x, pos_y - 20, self.font_item, self.font_item_selected)
+        registerbutton.generateWidgets(pos_x - 40, pos_y - 20, self.font_item, self.font_item_selected) 
+        gobackbutton.generateWidgets(pos_x + 40, pos_y - 20, self.font_item, self.font_item_selected)
         self.font_item['font_size'] = 15
         self.font_item_selected['font_size'] = 17
         self.font_item_selected['color'] = (0, 0, 0, 255)
@@ -504,6 +630,11 @@ class SingleRegisterMenu(Menu):
             else:
                 request_sign_up(account, password) # request_notice is from network.py
 
+    def gameGoback(self): 
+        removeContent() 
+        gameLayer.remove("register_button") 
+        AddLoginContext() 
+        
     def gameUsername(self, value):
         removeContent()
         '''这里的value是输入的帐号'''
@@ -579,6 +710,8 @@ def registerSuccessOp():
 def signInSuccessOp():
     '''下面是当帐号密码通过时的操作'''
     LeaveLoginContext()
+    menu_button = SingleMainMenu() 
+    gameLayer.add(menu_button, z=20, name="menu_button")
     global current
     current = SingleGameStartMenu()
     global currentMenu

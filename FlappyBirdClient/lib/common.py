@@ -10,6 +10,8 @@ TEMPDIR = os.path.normpath(os.path.join(THISDIR, '..', 'temp'))
 if not os.path.exists(TEMPDIR):
 	os.mkdir(TEMPDIR)
 
-
+tmp = open(os.path.join(TEMPDIR, 'tmp_Information.tmp'), 'w')
+tmp.close()
+    
 def load_image(path):
     return pyglet.image.load(os.path.join(DATADIR, path))

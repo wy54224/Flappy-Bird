@@ -77,12 +77,6 @@ def addCollision(gameScene, gameLayer, spriteBird, pipes, land_1, land_2):
     gameScene.schedule(collisionHandler)
 
 def gameOver(gameScene, land_1, land_2, spriteBird, upPipeCollided):
-	#游戏结束，记录本局结果
-    global update
-    if not update:
-        updateGameResult()
-        update = True
-	
     global collision_func
     land_1.stop()
     land_2.stop()
@@ -93,8 +87,8 @@ def gameOver(gameScene, land_1, land_2, spriteBird, upPipeCollided):
     if upPipeCollided and collision_func:
         gameScene.unschedule(collision_func)
         spriteBird.stop()
-        import game_controller
-        game_controller.backToMainMenu()
+        #游戏结束更新游戏结果
+        updateGameResult()
 
 def updateGameResult():
     from pipe import g_score
@@ -107,3 +101,12 @@ def updateGameResult():
     WriteResult_tmp(g_score, elapsed)
     WriteResult_HistoryResult(account, g_score, elapsed, difficulty)
     request_send_result(account, g_score, elapsed, difficulty)
+    
+def removeSchedule(gameScene):
+    global collision_func
+    removeMovePipeFunc(gameScene)
+    removeCalScoreFunc(gameScene)
+    removeBirdTouchHandler(gameScene)
+    if collision_func != None:
+        gameScene.unschedule(collision_func)
+        collision_func = None
