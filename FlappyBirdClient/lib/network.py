@@ -45,6 +45,8 @@ def connect(gameScene):
         if 'sign_in_result' in data:
             fix_sign_in_result(data)
             
+        if 're_game_result' in data:
+            fix_game_result(data)
     gameScene.schedule(receiveServer)
     return connected
 
@@ -69,6 +71,18 @@ def fix_sign_in_result(data):
     elif data['sign_in_result'] == "success":
         game_controller.signInSuccessOp()
 
+def fix_game_result(data):
+    #从服务器获取到排名，执行相关操作
+    data = data['re_game_result']
+    data = data.strip()
+    dataList = data.split('\t')
+    if len(dataList) != 4:
+        print("Error: result data has error")
+    bestScore = dataList[0]
+    bestTime = dataList[1]
+    totalPerson = dataList[2]
+    myRank = dataList[3]
+    print data        
  
 def get_send_data():
     send_data = {}
@@ -94,3 +108,11 @@ def request_sign_in(account, password):
     send_data = get_send_data()
     send_data['sign_in'] = data
     netstream.send(sock, send_data)
+   
+#向server发送游戏结果   
+def request_send_result(account, score, survival_time, diificulty):
+    data = str(account) + '\t' + str(score) + '\t' + str(survival_time) + '\t' + str(diificulty)
+    send_data = get_send_data()
+    send_data['game_result'] = data
+    netstream.send(sock, send_data)
+    

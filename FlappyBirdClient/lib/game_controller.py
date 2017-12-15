@@ -71,6 +71,8 @@ def game_start(_gameScene):
     initGameLayer()
     #start_botton = SingleGameStartMenu()
     #gameLayer.add(start_botton, z=20, name="start_button")
+    menu_button = SingleMainMenu()
+    gameLayer.add(menu_button, z=20, name="menu_button")
     AddLoginContext()
     connect(gameScene)
 
@@ -118,7 +120,7 @@ def singleGameReady():
             isGamseStart = True
             global TimeStart
             TimeStart = time.clock()
-
+			
             spriteBird.gravity = gravity #gravity is from bird.py
             # handling bird touch events
             addTouchHandler(gameScene, isGamseStart, spriteBird)
@@ -453,7 +455,7 @@ class SingleRegisterMenu(Menu):
         super(SingleRegisterMenu, self).__init__()
         #初始化账号信息为空
         initializeRegisterInformation()
-
+        
         userlabel = MenuItem('Username:', None)
         usertext = MyOwnEntryItem('', True, self.gameUsername, "", 12)
         passlabel = MenuItem('Password:', None)
@@ -461,7 +463,6 @@ class SingleRegisterMenu(Menu):
         passagainlabel = MenuItem('Password Again:', None)
         passagaintext = MyOwnEntryItem('', False, self.gamePasswordAgain, "", 12)
         registerbutton = ImageMenuItem(common.load_image("button_register.png"), self.gameRegister)
-        gobackbutton = ImageMenuItem(common.load_image("button_play.png"), self.gameGoback)
         self.font_item['font_size'] = 15
         self.font_item_selected['font_size'] = 17
         items = [
@@ -471,8 +472,7 @@ class SingleRegisterMenu(Menu):
                 passtext,
                 passagainlabel,
                 passagaintext,
-                registerbutton,
-                gobackbutton
+                registerbutton
                 ]
         self.create_menu(items)
         width, height = director.get_window_size()
@@ -480,8 +480,7 @@ class SingleRegisterMenu(Menu):
         pos_y = height // 2
         self.font_item['font_size'] = 38
         self.font_item_selected['font_size'] = 39
-        registerbutton.generateWidgets(pos_x - 40, pos_y - 20, self.font_item, self.font_item_selected)
-        gobackbutton.generateWidgets(pos_x + 40, pos_y - 20, self.font_item, self.font_item_selected)
+        registerbutton.generateWidgets(pos_x, pos_y - 20, self.font_item, self.font_item_selected)
         self.font_item['font_size'] = 15
         self.font_item_selected['font_size'] = 17
         self.font_item_selected['color'] = (0, 0, 0, 255)
@@ -504,11 +503,6 @@ class SingleRegisterMenu(Menu):
                 showContent(content)
             else:
                 request_sign_up(account, password) # request_notice is from network.py
-
-    def gameGoback(self):
-        removeContent()
-        gameLayer.remove("register_button")
-        AddLoginContext()
 
     def gameUsername(self, value):
         removeContent()
@@ -585,16 +579,15 @@ def registerSuccessOp():
 def signInSuccessOp():
     '''下面是当帐号密码通过时的操作'''
     LeaveLoginContext()
-    menu_button = SingleMainMenu()
-    gameLayer.add(menu_button, z=20, name="menu_button")
     global current
     current = SingleGameStartMenu()
     global currentMenu
     currentMenu = "start_button"
-    gameLayer.add(current, z=90, name="start_button")
-
+    gameLayer.add(current, z=90, name="start_button")    
+   
 def initializeRegisterInformation():
     global account, password, passwordRepeat
     account = None
     password = None
     passwordRepeat = None
+    

@@ -41,6 +41,17 @@ def fix_sign_in(recvData):
         sendData = {"sign_in_result": "success"}
         netstream.send(onlineUser[number]['connection'], sendData)
 
+#处理收到游戏结果的消息
+def fix_game_result(recvData):
+    number = recvData['sid']
+    print 'receive sign_up request from user id:', number
+    bestScore, bestTime, totalPerson, myRank = databaseOp.store_Result(recvData['game_result'])
+    number = recvData['sid']
+    #给客户端发送排名信息
+    information = str(bestScore) + '\t' + str(bestTime) + '\t' + str(totalPerson) + '\t' + str(myRank)
+    sendData = {"re_game_result": information}
+    netstream.send(onlineUser[number]['connection'], sendData)
+       
 if __name__ == "__main__":
 	s = socket.socket()
 
@@ -95,6 +106,8 @@ while inputs:
                         fix_sign_up(recvData)
                     elif 'sign_in' in recvData:
                         fix_sign_in(recvData)
+                    elif 'game_result' in recvData:
+                        fix_game_result(recvData)
     except Exception:
         traceback.print_exc()
         print 'Error: socket 链接异常'

@@ -101,7 +101,9 @@ def updateGameResult():
     from game_controller import account
     from game_controller import TimeStart
     from game_controller import difficulty
+    from network import request_send_result
     Time_End = time.clock()
     elapsed = Time_End - TimeStart
     WriteResult_tmp(g_score, elapsed)
     WriteResult_HistoryResult(account, g_score, elapsed, difficulty)
+    request_send_result(account, g_score, elapsed, difficulty)

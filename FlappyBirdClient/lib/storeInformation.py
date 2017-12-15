@@ -76,11 +76,10 @@ def getRank(File, Score, Time):
 				isInsert = True
 			index += 1
 			if index >= MAX_ITEM:
-				break;
+				break
 		else:
 			print("Error: Read Data File Error\n")
-			break;	
-	
+			break
 	#如果文件没有被插入进数据中，并且数据还有空位
 	if len(DataMat) < MAX_ITEM and not isInsert:
 		DataMat.append([0, Score, Time])
