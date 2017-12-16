@@ -71,6 +71,9 @@ def fix_sign_in_result(data):
     elif data['sign_in_result'] == "passwordError":
         content = "Password error"
         game_controller.showContent(content)
+    elif data['sign_in_result'] == "hasOnLine":
+        content = "the user has been on Line"
+        game_controller.showContent(content)
     elif data['sign_in_result'] == "success":
         game_controller.signInSuccessOp()
 
@@ -124,5 +127,11 @@ def request_send_result(account, score, survival_time, diificulty):
     data = str(account) + '\t' + str(score) + '\t' + str(survival_time) + '\t' + str(diificulty)
     send_data = get_send_data()
     send_data['game_result'] = data
+    netstream.send(sock, send_data)
+    
+def request_log_out(account):
+    data = str(account)
+    send_data = get_send_data()
+    send_data['log_out'] = data
     netstream.send(sock, send_data)
     

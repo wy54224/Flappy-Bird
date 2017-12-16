@@ -398,6 +398,7 @@ class SingleMenu(Menu):
             self.create_menu(items,selected_effect=zoom_in(),unselected_effect=zoom_out())
 
         def logOut(self):
+            import network
             gameScene.remove("MainMenu")
             removeSchedule(gameScene)
             gameScene.resume_scheduler()
@@ -409,6 +410,7 @@ class SingleMenu(Menu):
             isGamseStart = False
             #menu_button = SingleMainMenu()
             #gameLayer.add(menu_button, z=20, name="menu_button")
+            network.request_log_out(account)
             AddLoginContext()
 
 '''Menu按钮'''
@@ -709,6 +711,7 @@ def registerSuccessOp():
 #sign in success, updata UI
 def signInSuccessOp():
     '''下面是当帐号密码通过时的操作'''
+    removeContent()
     LeaveLoginContext()
     menu_button = SingleMainMenu() 
     gameLayer.add(menu_button, z=20, name="menu_button")
