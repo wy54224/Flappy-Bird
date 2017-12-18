@@ -398,6 +398,8 @@ class SingleMenu(Menu):
             self.create_menu(items,selected_effect=zoom_in(),unselected_effect=zoom_out())
 
         def logOut(self):
+            global password
+            password = None
             import network
             gameScene.remove("MainMenu")
             removeSchedule(gameScene)
@@ -414,9 +416,11 @@ class SingleMenu(Menu):
             AddLoginContext()
 
         def switch(self):
-            global account
-            account = ''
             import network
+            global account, password
+            network.request_log_out(account)  
+            account = ''
+            password = None
             gameScene.remove("MainMenu")
             removeSchedule(gameScene)
             gameScene.resume_scheduler()
@@ -428,7 +432,6 @@ class SingleMenu(Menu):
             isGamseStart = False
             #menu_button = SingleMainMenu()
             #gameLayer.add(menu_button, z=20, name="menu_button")
-            network.request_log_out(account)
             AddLoginContext()
 
 '''Menu按钮'''
@@ -579,6 +582,7 @@ class SingleLoginMenu(Menu):
             showContent(content)
 
     def gameRegister(self):
+        removeContent()
         LeaveLoginContext()
         global current
         current = SingleRegisterMenu()
@@ -733,6 +737,8 @@ def registerSuccessOp():
     print("register success\n")
     removeContent()
     gameLayer.remove("register_button")
+    global account, password
+    password = None
     AddLoginContext()
 
 #sign in success, updata UI

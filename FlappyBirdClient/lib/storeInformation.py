@@ -43,8 +43,6 @@ def WriteResult_HistoryResult(ID, Score, Time, difficulty):
 	
 	File_History = open(File_History_Dir, 'r')
 	DataMat = getRank(File_History, Score, Time)
-	print(DataMat)
-	print("\n")
 	File_History.close()
 	File_History = open(File_History_Dir, 'w')
 	for i in range(len(DataMat)):

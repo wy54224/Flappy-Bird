@@ -1,6 +1,10 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 import socket, json, base64
+import sys
+import rsa 
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 # constants
 TIMEOUT = -1
@@ -85,12 +89,40 @@ def pack(dic):
         string = "000"
     return string
     
-# 功能：对输入的string（不含长度信息） 进行base64解密 再用json转换 得到dict
+# 功能：对输入的string（不含长度信息） 先进行rsa解密 进行base64解密 再用json转换 得到dict
 # 输入string
 # 输出dict
 def unpack(string):
+    # rsa解密
+    prikey = readPrivateKey()
+    string = rsa_decrypt(string, prikey)
     # base64解密
     jsonData = base64.b64decode(string)
     # json解析
     dic = json.loads(jsonData)
     return dic
+
+#对string进行rsa解密，_pri为私钥
+def rsa_decrypt(biz_content, _pri):
+    biz_content = base64.b64decode(biz_content.encode('utf-8'))
+    # 1024bit key
+    default_length = 128
+    len_content = len(biz_content)
+    if len_content < default_length:
+        return rsa.decrypt(biz_content, _pri)
+    offset = 0
+    params_lst = []
+    while len_content - offset > 0:
+        if len_content - offset > default_length:
+            params_lst.append(rsa.decrypt(biz_content[offset: offset+default_length], _pri))
+        else:
+            params_lst.append(rsa.decrypt(biz_content[offset:], _pri))
+        offset += default_length
+    target = ''.join(params_lst)
+    return target
+    
+def readPrivateKey():
+    with open('private.pem') as privatefile:
+        p = privatefile.read()
+        prikey = rsa.PrivateKey.load_pkcs1(p)
+    return prikey

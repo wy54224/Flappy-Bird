@@ -55,8 +55,8 @@ def fix_sign_in(recvData):
             #用户成功登陆，服务器记录其地址与用户名的对应关系
             addr_userName[onlineUser[number]['addr']] = userName
             userName_state[userName] = True     #记为在线状态
-            print addr_userName
-            print userName_state
+            print 'address-map dict: ', addr_userName
+            print 'userName-State dict: ', userName_state, '\n'
             #------------------------------------------------
             number = recvData['sid']
             sendData = {"sign_in_result": "success"}
@@ -127,8 +127,8 @@ while inputs:
                             userName_state[addr_userName[str(r.getpeername())]] = False
                             addr_userName.pop(str(r.getpeername()))
                             print 'offline: '
-                            print addr_userName
-                            print userName_state
+                            print 'address-map dict: ', addr_userName
+                            print 'userName-State dict: ', userName_state, '\n'
                         
                 else:  # 根据收到的request发送response
 					#公告

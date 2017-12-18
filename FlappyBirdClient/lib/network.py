@@ -43,7 +43,6 @@ def connect(gameScene):
             fix_sign_up_result(data)
         
         if 'sign_in_result' in data:
-            print 'get sign in result ', data['sign_in_result']
             fix_sign_in_result(data)
             
         if 're_game_result' in data:
@@ -63,7 +62,6 @@ def fix_sign_up_result(data):
         game_controller.registerSuccessOp()
         
 def fix_sign_in_result(data):
-    print 'get sign in result ', data['sign_in_result']
     import game_controller
     if data['sign_in_result'] == "notAUser":
         content = "userName is not exist"
@@ -94,7 +92,7 @@ def fix_game_result(data):
     #从服务器收到游戏结果后，显示游戏结果
     import game_controller
     game_controller.backToMainMenu()
-    print "receive game rank", data        
+    print "receive game rank:  ", data        
  
 def get_send_data():
     send_data = {}
@@ -120,7 +118,6 @@ def request_sign_in(account, password):
     send_data = get_send_data()
     send_data['sign_in'] = data
     netstream.send(sock, send_data)
-    print 'have send sign in message'
    
 #向server发送游戏结果   
 def request_send_result(account, score, survival_time, diificulty):
