@@ -57,6 +57,8 @@ newLabel = None
 scoreItem = None
 bestScoreItem = None
 rankItem = None
+#是否有AI
+b_AI = False
 
 def initGameLayer():
     global spriteBird, gameLayer, land_1, land_2, spriteBird_AI
@@ -68,9 +70,10 @@ def initGameLayer():
     gameLayer.add(bg, z=0)
     # add moving bird
     spriteBird = creatBird()
-    spriteBird_AI = creatBird()
-    gameLayer.add(spriteBird_AI, z=20)
     gameLayer.add(spriteBird, z=20)
+    if b_AI:
+        spriteBird_AI = creatBird()
+        gameLayer.add(spriteBird_AI, z=20)
     # add moving land
     land_1, land_2 = createLand()
     gameLayer.add(land_1, z=10)
@@ -103,6 +106,7 @@ def createLabel(value, x, y):
 # single game start button的回调函数
 def singleGameReady():
     removeContent()
+    initGameLayer()
     ready = createAtlasSprite("text_ready")
     ready.position = (common.visibleSize["width"]/2, common.visibleSize["height"] * 3/4)
 
@@ -110,7 +114,8 @@ def singleGameReady():
     tutorial.position = (common.visibleSize["width"]/2, common.visibleSize["height"]/2)
 
     spriteBird.position = (common.visibleSize["width"]/3, spriteBird.position[1])
-    spriteBird_AI.position = (common.visibleSize["width"] * 3 / 5, spriteBird.position[1])
+    if b_AI:
+        spriteBird_AI.position = (common.visibleSize["width"] * 3 / 5, spriteBird.position[1])
 
     #handling touch events
     class ReadyTouchHandler(cocos.layer.Layer):
@@ -136,7 +141,8 @@ def singleGameReady():
             TimeStart = time.clock()
 
             spriteBird.gravity = gravity #gravity is from bird.py
-            spriteBird_AI.gravity = gravity
+            if b_AI:
+                spriteBird_AI.gravity = gravity
             # handling bird touch events
             addTouchHandler(gameScene, isGamseStart, spriteBird)
             score = 0   #分数，飞过一个管子得到一分
@@ -144,11 +150,11 @@ def singleGameReady():
             # add moving pipes
             global difficulty
             if(difficulty == 0):
-                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 120)
+                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 120, b_AI)
             elif(difficulty == 1):
-                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 80)
+                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 80, b_AI)
             else:
-                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 60)
+                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 60, b_AI)
             # 小鸟AI初始化
             # initAI(gameLayer)
             # add score
@@ -355,12 +361,16 @@ class SingleGameStartMenu(Menu):
 class SingleDifficultyChooseMenu(Menu):
     def __init__(self):
         super(SingleDifficultyChooseMenu, self).__init__()
+        b_AI = False
         items = [
                 (ImageMenuItem(common.load_image("button_easy.png"), self.setEasy)),
                 (ImageMenuItem(common.load_image("button_middle.png"), self.setMiddle)),
-                (ImageMenuItem(common.load_image("button_hard.png"), self.setHard))
+                (ImageMenuItem(common.load_image("button_hard.png"), self.setHard)),
+                (ImageMenuItem(common.load_image("button_AI_Easy.png"), self.setEasy_AI)),
+                (ImageMenuItem(common.load_image("button_AI_Mid.png"), self.setMiddle_AI))
                 ]
         self.create_menu(items,selected_effect=zoom_in(),unselected_effect=zoom_out())
+        
 
     def setEasy(self):
         gameLayer.remove("difficulty_button")
@@ -392,6 +402,28 @@ class SingleDifficultyChooseMenu(Menu):
         currentMenu = None
         singleGameReady()
 
+    def setEasy_AI(self):
+        gameLayer.remove("difficulty_button")
+        global difficulty, b_AI
+        difficulty = 0
+        global current
+        current = None
+        global currentMenu
+        currentMenu = None
+        b_AI = True
+        singleGameReady()
+        
+    def setMiddle_AI(self):
+        gameLayer.remove("difficulty_button")
+        global difficulty, b_AI
+        difficulty = 1
+        global current
+        current = None
+        global currentMenu
+        currentMenu = None
+        b_AI = True
+        singleGameReady()
+        
 '''Menu菜单'''
 class SingleMenu(Menu):
         def __init__(self):

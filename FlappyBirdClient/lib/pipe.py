@@ -43,13 +43,13 @@ class ActorModel(object):
             self.cshape = CircleShape(eu.Vector2(center_x, center_y), radius)
             self.name = name
 
-def createPipes(layer, gameScene, spriteBird, spriteBird_AI, score, speed):
+def createPipes(layer, gameScene, spriteBird, spriteBird_AI, score, speed, b_AI):
     global g_score, movePipeFunc, calScoreFunc
-    nowFirstPipeY = None
-    nowSecondPipeY = None
-    nowFirstPipeIndex = 0
     def initPipe():
-        global nowFirstPipeY, nowSecondPipeY
+        global nowFirstPipeY, nowSecondPipeY, nowFirstPipeIndex
+        nowFirstPipeY = None
+        nowSecondPipeY = None
+        nowFirstPipeIndex = 0
         for i in range(0, pipeCount):
             #把downPipe和upPipe组合为singlePipe
             pipeDistance[i] = random.randint(speed * 5 / 6, 100)
@@ -92,14 +92,13 @@ def createPipes(layer, gameScene, spriteBird, spriteBird_AI, score, speed):
                 nowSecondPipeY = heightOffset + pipeHeight/2 + 20
                 nowFirstPipeIndex = next
                 break
-        #print spriteBird.position[1], nowDownPipeY
-        if spriteBird_AI.position[1] < nowFirstPipeY:
+        #AI模式
+        if b_AI and spriteBird_AI.position[1] < nowFirstPipeY:
                 spriteBird_AI.velocity = (0, upSpeed)
                 
     def calScore(dt):
         global g_score, nowFirstPipeY, nowSecondPipeY, nowFirstPipeIndex
         birdXPosition = spriteBird.position[0]
-        birdXPosition_AI = spriteBird_AI.position[0]
         for i in range(0, pipeCount):
             if pipeState[i] == PIPE_NEW and pipes[i].position[0] < birdXPosition:
                 pipeState[i] = PIPE_PASS
@@ -112,8 +111,11 @@ def createPipes(layer, gameScene, spriteBird, spriteBird_AI, score, speed):
                 WriteInformation_tmp(g_score, elapsed)
 				#---------------------------------------
                 setSpriteScores(g_score) #show score on top of screen
-            if pipes[nowFirstPipeIndex].position[0] + pipeWidth / 2 + 10 < birdXPosition_AI:
-                nowFirstPipeY = nowSecondPipeY
+            #AI模式
+            if b_AI:
+                birdXPosition_AI = spriteBird_AI.position[0]
+                if pipes[nowFirstPipeIndex].position[0] + pipeWidth / 2 + 10 < birdXPosition_AI:
+                    nowFirstPipeY = nowSecondPipeY
     g_score = score
     initPipe()
     movePipeFunc = movePipe
