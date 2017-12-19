@@ -21,6 +21,11 @@ heightOffset = 25     #管道的高度偏移值
 # vars
 PIPE_NEW = 0
 PIPE_PASS = 1
+
+nowFirstPipeY = None
+nowSecondPipeY = None
+nowFirstPipeIndex = 0
+
 pipes = {}    #contains nodes of pipes
 downPipes = {}
 pipeDistance = {}
@@ -38,9 +43,13 @@ class ActorModel(object):
             self.cshape = CircleShape(eu.Vector2(center_x, center_y), radius)
             self.name = name
 
-def createPipes(layer, gameScene, spriteBird, score, speed):
+def createPipes(layer, gameScene, spriteBird, spriteBird_AI, score, speed):
     global g_score, movePipeFunc, calScoreFunc
+    nowFirstPipeY = None
+    nowSecondPipeY = None
+    nowFirstPipeIndex = 0
     def initPipe():
+        global nowFirstPipeY, nowSecondPipeY
         for i in range(0, pipeCount):
             #把downPipe和upPipe组合为singlePipe
             pipeDistance[i] = random.randint(speed * 5 / 6, 100)
@@ -59,12 +68,15 @@ def createPipes(layer, gameScene, spriteBird, score, speed):
             pipeState[i] = PIPE_NEW
             upPipeYPosition[i] = heightOffset + pipeHeight/2
             downPipeYPosition[i] = heightOffset + pipeHeight/2 + pipeDistance[i]
+        nowFirstPipeY = downPipeYPosition[0] - pipeDistance[0] + 20
+        nowSecondPipeY = downPipeYPosition[1] - pipeDistance[1] + 20
 
     def movePipe(dt):
+        global nowFirstPipeY, nowSecondPipeY, nowFirstPipeIndex
         moveDistance = common.visibleSize["width"]/speed   # 移动速度和land一致
         for i in range(0, pipeCount):
             pipes[i].position = (pipes[i].position[0]-moveDistance, pipes[i].position[1])
-            if pipes[i].position[0] < -pipeWidth/2:
+            if pipes[i].position[0] < -pipeWidth/2:   #pipe[i]从屏幕消失
                 pipeNode = pipes[i]
                 downPipe = downPipes[i]
                 pipeState[i] = PIPE_NEW
@@ -77,15 +89,21 @@ def createPipes(layer, gameScene, spriteBird, score, speed):
                 pipeNode.position = (pipes[next].position[0] + pipeInterval, heightOffset)
                 upPipeYPosition[i] = heightOffset + pipeHeight/2
                 downPipeYPosition[i] = heightOffset + pipeHeight/2 + pipeDistance[i]
+                nowSecondPipeY = heightOffset + pipeHeight/2 + 20
+                nowFirstPipeIndex = next
                 break
-
+        #print spriteBird.position[1], nowDownPipeY
+        if spriteBird_AI.position[1] < nowFirstPipeY:
+                spriteBird_AI.velocity = (0, upSpeed)
+                
     def calScore(dt):
-        global g_score
+        global g_score, nowFirstPipeY, nowSecondPipeY, nowFirstPipeIndex
         birdXPosition = spriteBird.position[0]
+        birdXPosition_AI = spriteBird_AI.position[0]
         for i in range(0, pipeCount):
-            if pipeState[i] == PIPE_NEW and pipes[i].position[0]< birdXPosition:
+            if pipeState[i] == PIPE_NEW and pipes[i].position[0] < birdXPosition:
                 pipeState[i] = PIPE_PASS
-                g_score = g_score + 1
+                g_score = g_score + 1 
 				#pass a pipe, then store imformation
                 from game_controller import TimeStart
                 #TimeStart = GetTimeStart()
@@ -94,7 +112,8 @@ def createPipes(layer, gameScene, spriteBird, score, speed):
                 WriteInformation_tmp(g_score, elapsed)
 				#---------------------------------------
                 setSpriteScores(g_score) #show score on top of screen
-
+            if pipes[nowFirstPipeIndex].position[0] + pipeWidth / 2 + 10 < birdXPosition_AI:
+                nowFirstPipeY = nowSecondPipeY
     g_score = score
     initPipe()
     movePipeFunc = movePipe

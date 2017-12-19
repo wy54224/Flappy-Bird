@@ -26,9 +26,8 @@ def creatBird():
     #create bird animate
     birdNum = str(random.randint(0, 2))
     spriteBird = CollidableAnimatingSprite("bird_"+birdNum, common.visibleSize["width"]/2, common.visibleSize["height"]/2, atlas["bird0_0"]["width"]/2 - 9)
-    
     return spriteBird
-
+    
 #handling touch events
 class birdTouchHandler(cocos.layer.Layer):
     is_event_handler = True     #: enable director.window events

@@ -27,6 +27,7 @@ TimeStart =  None
 gameLayer = None
 gameScene = None
 spriteBird = None
+spriteBird_AI = None
 land_1 = None
 land_2 = None
 startLayer = None
@@ -58,7 +59,7 @@ bestScoreItem = None
 rankItem = None
 
 def initGameLayer():
-    global spriteBird, gameLayer, land_1, land_2
+    global spriteBird, gameLayer, land_1, land_2, spriteBird_AI
     # gameLayer: 游戏场景所在的layer
     gameLayer = Layer()
     # add background
@@ -67,6 +68,8 @@ def initGameLayer():
     gameLayer.add(bg, z=0)
     # add moving bird
     spriteBird = creatBird()
+    spriteBird_AI = creatBird()
+    gameLayer.add(spriteBird_AI, z=20)
     gameLayer.add(spriteBird, z=20)
     # add moving land
     land_1, land_2 = createLand()
@@ -107,6 +110,7 @@ def singleGameReady():
     tutorial.position = (common.visibleSize["width"]/2, common.visibleSize["height"]/2)
 
     spriteBird.position = (common.visibleSize["width"]/3, spriteBird.position[1])
+    spriteBird_AI.position = (common.visibleSize["width"] * 3 / 5, spriteBird.position[1])
 
     #handling touch events
     class ReadyTouchHandler(cocos.layer.Layer):
@@ -132,6 +136,7 @@ def singleGameReady():
             TimeStart = time.clock()
 
             spriteBird.gravity = gravity #gravity is from bird.py
+            spriteBird_AI.gravity = gravity
             # handling bird touch events
             addTouchHandler(gameScene, isGamseStart, spriteBird)
             score = 0   #分数，飞过一个管子得到一分
@@ -139,11 +144,11 @@ def singleGameReady():
             # add moving pipes
             global difficulty
             if(difficulty == 0):
-                pipes = createPipes(gameLayer, gameScene, spriteBird, score, 120)
+                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 120)
             elif(difficulty == 1):
-                pipes = createPipes(gameLayer, gameScene, spriteBird, score, 80)
+                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 80)
             else:
-                pipes = createPipes(gameLayer, gameScene, spriteBird, score, 60)
+                pipes = createPipes(gameLayer, gameScene, spriteBird, spriteBird_AI, score, 60)
             # 小鸟AI初始化
             # initAI(gameLayer)
             # add score
@@ -719,6 +724,7 @@ class SingleRegisterMenu(Menu):
         #--------------------------#
         print value
 
+#sign in UI
 def AddLoginContext():
     global current
     current = SingleLoginMenu()

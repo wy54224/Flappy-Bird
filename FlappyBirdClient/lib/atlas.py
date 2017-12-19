@@ -98,8 +98,8 @@ class CollidableAnimatingSprite(cocos.sprite.Sprite):
         self.name = image
         self.gravity = 0
         self.velocity = (0, 0)
-        self.do(Move())
-
+        self.do(Move())       
+        
 class CollidableRectSprite(cocos.sprite.Sprite):
     def __init__(self, image, center_x, center_y, half_width, half_height):
         super(CollidableRectSprite, self).__init__(common.load_image(image+".png"))
